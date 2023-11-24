@@ -152,6 +152,12 @@ def rota_principal():
         return jsonify({"resultado": resultado})
     else:
         return jsonify({"error": "Solicitação inválida"}), 400
+    
+
+@app.route('/', methods=['GET'])
+def hello_world():
+        return ("Hello World")
+  
 
 if __name__ == '__main__':
     app.run(debug=True)

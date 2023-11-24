@@ -1,0 +1,5 @@
+# Arquivo .gitignore
+
+# Pastas virtuais Python
+venv/
+__pycache__/
