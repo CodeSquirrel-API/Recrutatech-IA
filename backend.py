@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 app = Flask(__name__)
 
-def getResultIa():
+def getResultIa(cha):
     host = "silly.db.elephantsql.com"
     port = "5432"
     database = "ljppladj"
@@ -54,32 +54,10 @@ def getResultIa():
     df_knowledge = df[['cnd_id', 'cnd_name', 'cnd_experience', 'knowledge']].drop_duplicates()
     df_attitude = df[['cnd_id', 'cnd_name', 'cnd_experience', 'attitude']].drop_duplicates()
 
-    desenvolvedor = {
-    'profissao': 'Desenvolvedor Back-End',
-    'habilidades': [
-        'Python', 
-        'Java', 
-        'Node.js', 
-        'MySQL',
-        'PostgreSQL'
-    ],
-    'conhecimentos': [
-        'Manipulação de Dados',
-        'Conhecimento em SQL',
-        'Testes Automatizados'
-    ],
-    'atitudes': [
-        'Lógica de Programação',
-        'Empatia',
-        'Criatividade',
-        'Resiliência',
-        
-    ]
-}
-
-    habilidades = desenvolvedor['habilidades']
-    conhecimentos = desenvolvedor['conhecimentos']
-    atitudes = desenvolvedor['atitudes']
+    cha = cha['desenvolvedor']
+    habilidades = cha['habilidades']
+    conhecimentos = cha['conhecimentos']
+    atitudes = cha['atitudes']
 
     df_skills['tem_habilidade'] = 0
     df_knowledge['tem_conhecimento'] = 0
@@ -119,9 +97,6 @@ def getResultIa():
 
     average_mse = mse_scores.mean()
 
-    print(f'MSE Scores: {mse_scores}')
-    print(f'Média MSE: {average_mse}')
-
     dt_regressor.fit(X, y)
 
     X_novos = df_final[['cnd_id', 'tem_habilidade', 'num_habilidades', 'num_atitudes', 'num_conhecimentos']]
@@ -138,22 +113,35 @@ def getResultIa():
     df_final['pontuacao'] = previsoes
 
     df_final = df_final.sort_values(by='pontuacao', ascending=False)
-    melhores_candidatos = df_final.head(10)
-    resultado = melhores_candidatos.to_json(orient='records')
+
+    resultados = df_final
+
+    pontuacao_minima = resultados['pontuacao'].min()
+    pontuacao_maxima = resultados['pontuacao'].max()
+
+    resultados['porcentagem'] = ((resultados['pontuacao'] - pontuacao_minima) / (pontuacao_maxima - pontuacao_minima)) * 100
+    resultados['porcentagem'] = resultados['porcentagem'].astype(int)
+    resultados = resultados.sort_values(by='porcentagem', ascending=False)
+    resultados['texto_porcentagem'] = resultados['porcentagem'].map(qualificar_porcentagem)
+
+    resultado = resultados.to_json(orient='records')
     resultado = [
-            {"cnd_id": cnd_id, "cnd_name": cnd_name, "cnd_email": cnd_email, "pontuacao": pontuacao}
-            for cnd_id, cnd_name, cnd_email, pontuacao in zip(df_final['cnd_id'], df_final['cnd_name'], df_final['cnd_email'], df_final['pontuacao'])
+            {"id": cnd_id, "name": cnd_name, "email": cnd_email, "pontuacao": pontuacao, "porcentagem": porcentagem, "qualificacao": texto_porcentagem}
+            for cnd_id, cnd_name, cnd_email, pontuacao, porcentagem, texto_porcentagem in zip(resultados['cnd_id'], resultados['cnd_name'], resultados['cnd_email'], resultados['pontuacao'], resultados['porcentagem'], resultados['texto_porcentagem'])
     ]
+
     return resultado
 
-def minha_funcao(payload):
-    profissao = payload.get('profissao', '')
-    conhecimento = payload.get('conhecimento', [])
-    habilidade = payload.get('habilidade', [])
-    atitude = payload.get('atitude', [])
+def qualificar_porcentagem(x):
+    if x < 50:
+        return f'Menos qualificado: {x}%'
+    elif x <= 70:
+        return f'Qualificado: {x}%'
+    else:
+        return f'Altamente qualificado: {x}%'
 
-    resultado = f"Profissão: {profissao}, Conhecimento: {conhecimento}, Habilidade: {habilidade}, Atitude: {atitude}"
-    result = getResultIa()
+def minha_funcao(payload):
+    result = getResultIa(payload)
     return result
 
 @app.route('/colaborador', methods=['POST'])
