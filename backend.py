@@ -1,16 +1,33 @@
-# SeuArquivo.py
-
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-def minha_funcao():
-    return "Olá do seu notebook!"
+def minha_funcao(payload):
 
-@app.route('/')
+    name = payload.get('name', '')
+    knowledge = payload.get('knowledge', '')
+    skill = payload.get('skill', '')
+    attitude = payload.get('attitude', '')
+    experience = payload.get('experience', '')
+
+
+    resultado = f"{name}! Conhecimento: {knowledge}, Habilidade: {skill}, Atitude: {attitude}, Experiência: {experience}"
+
+    return resultado
+
+@app.route('/colaborador', methods=['POST'])
 def rota_principal():
-    resultado = minha_funcao()
-    return jsonify({"resultado": resultado})
+
+    if request.method == 'POST' and request.is_json:
+
+        payload = request.get_json()
+
+        
+        resultado = minha_funcao(payload)
+
+        return jsonify({"resultado": resultado})
+    else:
+        return jsonify({"error": "Solicitação inválida"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
