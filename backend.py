@@ -4,9 +4,11 @@ import psycopg2
 from IPython.display import display
 from sklearn.model_selection import cross_val_score
 from sklearn.tree import DecisionTreeRegressor
+from flask_cors import CORS  # Importe a extensão CORS
 
 
 app = Flask(__name__)
+CORS(app) 
 
 def getResultIa(cha):
     host = "silly.db.elephantsql.com"
