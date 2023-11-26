@@ -125,7 +125,7 @@ def getResultIa(cha):
     resultados['porcentagem'] = resultados['porcentagem'].astype(int)
     resultados = resultados.sort_values(by='porcentagem', ascending=False)
     resultados['texto_porcentagem'] = resultados['porcentagem'].map(qualificar_porcentagem)
-
+    resultados = resultados.head(10)
     resultado = resultados.to_json(orient='records')
     resultado = [
             {"id": cnd_id, "name": cnd_name, "email": cnd_email, "pontuacao": pontuacao, "porcentagem": porcentagem, "qualificacao": texto_porcentagem}
@@ -154,7 +154,6 @@ def rota_principal():
         return jsonify({"resultado": resultado})
     else:
         return jsonify({"error": "Solicitação inválida"}), 400
-    
 
 @app.route('/', methods=['GET'])
 def hello_world():
